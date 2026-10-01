@@ -20,6 +20,14 @@ def catalog(model="gpt-6.1-sol", efforts=("medium", "high", "ultra")):
 
 
 class AdviceTests(unittest.TestCase):
+    def test_zero_workers_rejected_and_partial_catalog_is_only_supplied_evidence(self):
+        with self.assertRaises(BudgetError):
+            advise(independent_parts=0)
+        result = advise(catalog={"data": [], "nextCursor": "remaining-page"})
+        self.assertFalse(result["supportedBySuppliedCatalog"])
+        self.assertFalse(result["settingsReady"])
+        self.assertEqual(result["recommendedModel"], "gpt-6.1-sol")
+
     def test_quality_before_cost_and_minimal_width(self):
         result = advise(error_cost="high", independent_parts=7, catalog=catalog())
         self.assertEqual(
