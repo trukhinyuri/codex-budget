@@ -8,9 +8,118 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def verify_host_skill(binary: str, environment: dict, root: Path, installed_root: Path) -> None:
+    from codex_budget.transport import _command, _Responses, _terminate, _WindowsJob
+
+    command, options = _command(binary)
+    job = _WindowsJob() if sys.platform == "win32" else None
+    try:
+        process = subprocess.Popen(  # noqa: S603 - stock CLI and fixed read-only RPCs
+            command,
+            **options,
+            env=environment,
+            cwd=root,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            bufsize=0,
+        )
+    except BaseException:
+        if job is not None:
+            job.close()
+        raise
+    responses = None
+    try:
+        if job is not None:
+            job.assign(process.pid)
+        responses = _Responses(process, time.monotonic() + 30)
+
+        def send(message: dict) -> None:
+            assert process.stdin is not None
+            process.stdin.write(json.dumps(message, separators=(",", ":")).encode() + b"\n")
+            process.stdin.flush()
+
+        send(
+            {
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "clientInfo": {"name": "codex_budget_plugin_test", "version": "1.0"},
+                    "capabilities": None,
+                },
+            }
+        )
+        responses.response(1)
+        send({"method": "initialized", "params": {}})
+        send(
+            {
+                "id": 2,
+                "method": "plugin/list",
+                "params": {
+                    "cwds": [str(root)],
+                    "marketplaceKinds": ["local"],
+                    "forceRefetch": False,
+                },
+            }
+        )
+        catalog = responses.response(2)
+        marketplace = next(
+            item for item in catalog["marketplaces"] if item["name"] == "codex-budget-marketplace"
+        )
+        plugin = next(item for item in marketplace["plugins"] if item["name"] == "codex-budget")
+        assert plugin["installed"] and plugin["enabled"]
+        send(
+            {
+                "id": 3,
+                "method": "plugin/read",
+                "params": {
+                    "marketplacePath": marketplace["path"],
+                    "remoteMarketplaceName": None,
+                    "pluginName": "codex-budget",
+                },
+            }
+        )
+        detail = responses.response(3)["plugin"]
+        assert any(
+            item["name"] == "codex-budget:codex-budget" and item["enabled"]
+            for item in detail["skills"]
+        )
+        assert detail["mcpServers"] == [] and detail["hooks"] == []
+        send(
+            {
+                "id": 4,
+                "method": "skills/list",
+                "params": {
+                    "cwds": [str(root)],
+                    "forceReload": True,
+                },
+            }
+        )
+        inventory = responses.response(4)
+        loaded = [
+            skill
+            for entry in inventory["data"]
+            for skill in entry["skills"]
+            if skill["name"] == "codex-budget:codex-budget"
+        ]
+        assert len(loaded) == 1 and loaded[0]["enabled"]
+        assert Path(loaded[0]["path"]).samefile(installed_root / "skills/codex-budget/SKILL.md")
+    finally:
+        try:
+            if responses is not None:
+                responses.close()
+        finally:
+            try:
+                _terminate(process, job)
+            finally:
+                if responses is not None:
+                    responses.join()
 
 
 def main() -> None:
@@ -60,7 +169,7 @@ def main() -> None:
         assert added["marketplaceName"] == "codex-budget-marketplace"
         installed = run("plugin", "add", "codex-budget@codex-budget-marketplace", "--json")
         installed_root = Path(installed["installedPath"])
-        assert installed["version"] == "0.1.0"
+        assert installed["version"] == "0.1.1"
         assert (installed_root / "skills/codex-budget/SKILL.md").is_file()
         result = subprocess.run(  # noqa: S603 - current Python and installed entry point
             [sys.executable, str(installed_root / "scripts/budget.py"), "--version"],  # noqa: S603 - current Python and verified installed script
@@ -70,10 +179,11 @@ def main() -> None:
             timeout=10,
             check=True,
         )
-        assert result.stdout.strip() == "codex-budget 0.1.0"
+        assert result.stdout.strip() == "codex-budget 0.1.1"
         listed = run("plugin", "list", "--marketplace", "codex-budget-marketplace", "--json")
         entry = next(item for item in listed["installed"] if item["name"] == "codex-budget")
         assert entry["installed"] and entry["enabled"]
+        verify_host_skill(binary, environment, root, installed_root)
         removed = run("plugin", "remove", "codex-budget@codex-budget-marketplace", "--json")
         assert removed["name"] == "codex-budget"
         print(
@@ -82,6 +192,8 @@ def main() -> None:
                     "nativePluginInstall": True,
                     "installedEntryPoint": True,
                     "enabledReadback": True,
+                    "enabledSkillReadback": True,
+                    "loadedSkillReadback": True,
                     "nativeRemoval": True,
                     "isolatedHome": True,
                     "modelTurnsStarted": 0,

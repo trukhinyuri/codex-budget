@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "codex-budget",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Plan weekly Codex usage with a 20 percentage point reserve, explicit estimates and a durable local ledger. Best effort, not unlimited usage.",
   "author": {"name": "Yuri Trukhin", "url": "https://github.com/trukhinyuri"},
   "repository": "https://github.com/trukhinyuri/codex-budget",

@@ -9,12 +9,12 @@ effort по инструкциям помощника, не безлимит и 
 В CI первого релиза включены macOS, Linux и Windows.
 
 ```sh
-codex plugin marketplace add trukhinyuri/codex-budget --ref v0.1.0
+codex plugin marketplace add trukhinyuri/codex-budget --ref v0.1.1
 codex plugin add codex-budget@codex-budget-marketplace
 codex plugin list --marketplace codex-budget-marketplace --json
 ```
 
-Откройте новый чат и вызовите `$codex-budget`; при необходимости перезапустите
+Откройте новый чат и вызовите `$codex-budget:codex-budget`; при необходимости перезапустите
 Desktop для обнаружения плагина. Он не устанавливает Python, не меняет модель,
 auth, платежи, security, hooks или расписания. Для запуска из исходников:
 

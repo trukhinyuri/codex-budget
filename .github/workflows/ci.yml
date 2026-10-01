@@ -2,6 +2,7 @@ name: Quality
 
 on:
   push:
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 
@@ -46,7 +47,7 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: python -m build
-      - run: python scripts/verify_release.py --zip dist/codex-budget-plugin-0.1.0.zip --wheel dist/codex_budget-0.1.0-py3-none-any.whl
+      - run: python scripts/verify_release.py --zip dist/codex-budget-plugin-0.1.1.zip --wheel dist/codex_budget-0.1.1-py3-none-any.whl
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-artifacts

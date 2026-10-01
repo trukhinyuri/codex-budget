@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- Document the host-qualified skill invocation `$codex-budget:codex-budget`.
+- Verify enabled skill discovery through stock App Server `plugin/read` and
+  `skills/list` during native plugin installation CI, in addition to registry and
+  installed-file checks. No model turn or account secret is required.
+
 ## 0.1.0
 
 - Public portable Codex plugin and repository marketplace.

@@ -78,7 +78,7 @@ class CliTests(unittest.TestCase):
             "--version",
         ]
         result = subprocess.run(command, text=True, capture_output=True, timeout=5)
-        self.assertEqual((result.returncode, result.stdout.strip()), (0, "codex-budget 0.1.0"))
+        self.assertEqual((result.returncode, result.stdout.strip()), (0, "codex-budget 0.1.1"))
         result = subprocess.run(
             [sys.executable, "-m", "codex_budget.integration", "install"],
             text=True,

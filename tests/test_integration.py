@@ -133,7 +133,7 @@ class IntegrationTests(unittest.TestCase):
     def test_disposable_cache_refused_before_global_edits(self):
         with patch(
             "codex_budget.integration.PACKAGE",
-            self.folder / "plugins/cache/marketplace/name/0.1.0/codex_budget",
+            self.folder / "plugins/cache/marketplace/name/0.1.1/codex_budget",
         ):
             with self.assertRaises(ValueError):
                 self.do_install()

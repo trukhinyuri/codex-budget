@@ -18,13 +18,13 @@ and Windows are included in the release CI matrix. Later Codex versions must pre
 the documented endpoint contract; the version number alone is not proof.
 
 ```sh
-codex plugin marketplace add trukhinyuri/codex-budget --ref v0.1.0
+codex plugin marketplace add trukhinyuri/codex-budget --ref v0.1.1
 codex plugin add codex-budget@codex-budget-marketplace
 codex plugin list --marketplace codex-budget-marketplace --json
 ```
 
 In Codex Desktop, open the plugin directory and select **Codex Budget**, then start
-a new chat and invoke **`$codex-budget`**. The plugin is skill driven: selecting it
+a new chat and invoke **`$codex-budget:codex-budget`**. The plugin is skill driven: selecting it
 does not silently create a universal gate for all chats. Restart the host if a newly
 installed plugin is not visible. The same marketplace/skill works in CLI `/plugins`.
 Use the returned `installedPath`, not a guessed cache/version directory.
@@ -153,7 +153,7 @@ its call operator; run that displayed command in PowerShell.
 python3 -m unittest discover -s tests -v
 ruff check .
 ruff format --check .
-python3 scripts/verify_release.py --zip dist/codex-budget-plugin-0.1.0.zip
+python3 scripts/verify_release.py --zip dist/codex-budget-plugin-0.1.1.zip
 ```
 
 CI runs independent-platform/version tests, packaging and plugin-install checks with
