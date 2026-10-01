@@ -730,7 +730,9 @@ class WindowsProcessTests(unittest.TestCase):
             mock.patch.dict(os.environ, {"PATH": str(self.directory), "PATHEXT": ".EXE;.CMD"}),
             mock.patch.object(transport, "MACOS_CLI_PATHS", ("/unused/mac/path",)),
         ):
-            self.assertEqual(transport._resolve_cli(None), str(command))
+            self.assertEqual(
+                os.path.normcase(transport._resolve_cli(None)), os.path.normcase(str(command))
+            )
 
 
 if __name__ == "__main__":

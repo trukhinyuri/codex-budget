@@ -46,8 +46,8 @@ class IntegrationTests(unittest.TestCase):
         self.do_install()
         before = tomllib.loads(self.original_config.decode())
         before["model_reasoning_effort"] = "medium"
-        self.assertEqual(tomllib.loads(self.config.read_text()), before)
-        self.assertIn("# keep comment", self.config.read_text())
+        self.assertEqual(tomllib.loads(self.config.read_text(encoding="utf-8")), before)
+        self.assertIn("# keep comment", self.config.read_text(encoding="utf-8"))
         if os.name == "posix":
             self.assertEqual(self.config.stat().st_mode & 0o777, 0o600)
         self.assertTrue(self.agents.read_bytes().startswith(self.original_agents))
@@ -57,10 +57,10 @@ class IntegrationTests(unittest.TestCase):
         original_manifest = first["manifest"]
         second = self.do_install()
         self.assertFalse(second["changed"])
-        self.assertEqual(self.agents.read_text().count(START), 1)
-        self.assertEqual(self.agents.read_text().count(END), 1)
+        self.assertEqual(self.agents.read_text(encoding="utf-8").count(START), 1)
+        self.assertEqual(self.agents.read_text(encoding="utf-8").count(END), 1)
         self.assertEqual(
-            json.loads((self.folder / "last-install.json").read_text())["manifest"],
+            json.loads((self.folder / "last-install.json").read_text(encoding="utf-8"))["manifest"],
             original_manifest,
         )
 
@@ -71,15 +71,20 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(rollback(result["manifest"], allowed)["restoredFiles"], 2)
         self.assertEqual(self.config.read_bytes(), self.original_config)
         self.assertEqual(self.agents.read_bytes(), self.original_agents)
-        self.assertEqual(json.loads(self.snapshot.read_text())["usedPercent"], 15)
+        self.assertEqual(json.loads(self.snapshot.read_text(encoding="utf-8"))["usedPercent"], 15)
         self.assertEqual(rollback(result["manifest"], allowed)["restoredFiles"], 0)
 
     def test_rollback_refuses_later_edits_and_corrupt_backup(self):
         result = self.do_install()
-        self.agents.write_text(self.agents.read_text() + "later edit\n")
+        self.agents.write_text(
+            self.agents.read_text(encoding="utf-8") + "later edit\n", encoding="utf-8"
+        )
         with self.assertRaises(ValueError):
             rollback(result["manifest"], (self.config, self.agents))
-        self.assertEqual(tomllib.loads(self.config.read_text())["model_reasoning_effort"], "medium")
+        self.assertEqual(
+            tomllib.loads(self.config.read_text(encoding="utf-8"))["model_reasoning_effort"],
+            "medium",
+        )
 
     def test_rollback_disallows_arbitrary_targets(self):
         result = self.do_install()
