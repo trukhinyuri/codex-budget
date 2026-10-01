@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "codex-budget"
-version = "0.1.1"
+version = "0.2.0"
 description = "Conservative weekly quota planning for Codex Desktop and CLI"
 readme = "README.md"
 requires-python = ">=3.11"

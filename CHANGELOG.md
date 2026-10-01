@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0
+
+- Add observed rolling 7/30-day shared-usage forecasts with coverage and explicit
+  unknown future capacity. Reset transitions never create spendable capacity.
+- Add quality-first model/effort/team-width advice, preserving explicit choices
+  and checking supplied `model/list` capabilities without applying settings.
+- Add audited estimate amendments for unknown-to-positive or increasing estimates;
+  reservations and unreconciled status are retained. No charge reconciliation.
+- Preserve the weekly 20 pp reserve, selected 3 pp buffer, permission checks,
+  ordinary unknown-state deferral, shared-client uncertainty and existing storage.
+- Add horizon/advice/amendment regressions and installed command readback.
+
 ## 0.1.1
 
 - Document the host-qualified skill invocation `$codex-budget:codex-budget`.

@@ -38,6 +38,26 @@ use `py -3` if that is the installed Python launcher.
    The reservation becomes `unreconciled`; it stays in that period. Percent deltas
    do not prove per-task charges. Never delete reserves to admit more work or reuse
    an ended ID. A freshly confirmed new weekly period has a separate ledger.
+6. For rolling weekly/month planning, use `horizon`. It reports only confirmed
+   same-account, same-period intervals and observed coverage; extrapolated demand
+   is shared spending, not future capacity or guaranteed cost. Never convert API
+   token prices into included quota. Do not rely on credits or a future reset to
+   complete today's task; plan all seven days, including weekends.
+7. Before each task and substantial new stage, choose quality/verification first.
+   `advise` provides deterministic model/effort/width suggestions. Supply a fresh,
+   complete `model/list` response via `--catalog` to check support; otherwise choices
+   remain unverified. Preserve an explicit user model/effort (including Ultra) and
+   reduce optional width/scope under pressure. Never claim a midturn switch or a
+   setting change: use only a supported interface before the next turn and confirm
+   effective settings there. Prefer the minimum useful team with independent scopes;
+   a reviewer complements objective checks. A decision error or unresolved
+   contradiction warrants reassessment; unavailable data does not justify escalation.
+8. `amend` may fill an unknown full-stage estimate only after its evidence is
+   actually verified, or increase a known estimate. Record `--reason` and `--evidence`;
+   the utility does not verify their truth. It never clears/decreases reservations
+   or reconciles charges. A shared percent delta is insufficient attribution. If
+   the evidence remains unknown, keep the reservation unknown. Reassess admission
+   after amendment. Installation never amends existing records automatically.
 
 Run `doctor` to check local prerequisites without a model call. If it fails, give
 the exact safe diagnostic and preserve unknown state. Consult the bundled README

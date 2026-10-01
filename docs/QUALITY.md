@@ -16,6 +16,9 @@ OpenAI, another model company, or an independent security auditor.
 | Repeatable delivery | macOS/Linux/Windows Python 3.11–3.14 CI, lint/format checks, deterministic plugin ZIP and wheel installation |
 | Public data hygiene | Release allowlist, tracked-file scan, no caches/ledgers/backups/credentials or private absolute paths |
 | Maintainability | License, support matrix, changelog, contribution and security reporting guidance; independent critical review |
+| Observed horizons | Same-account intervals within confirmed periods only; 7/30-day coverage, reset/decrease rejection, unknown future capacity |
+| Quality advice | Risk before cost, supported supplied capabilities, explicit Ultra preservation, unknown/pressure width reduction, no applied settings |
+| Audited amendments | Unknown-to-positive/increase only, mandatory evidence/reason, unchanged finished status, retained reservation and original estimate |
 
 Support is conditional on Python 3.11+, a compatible stock Codex CLI (baseline
 0.159.2), macOS, Linux or Windows, writable stable local storage, and an account for which
@@ -44,6 +47,13 @@ Finished estimates remain unreconciled because a shared percentage delta cannot
 attribute a charge to a stage. This may double-count conservatively and defer work
 early. No silent release is performed. A new period needs a fresh confirmed identity
 and reset transition; history stays intact.
+
+Audited amendments record a caller-verified justified estimate when previously
+unknown, or increase an existing estimate. They never decrease or clear one, and
+the utility cannot establish the authenticity of evidence text. No automatic
+reconciliation is attempted. Horizon forecasts extrapolate observed shared demand;
+unobserved future capacity is unknown. Model/team advice is a heuristic with no
+quality/latency superiority claim and no runtime or global setting mutation.
 
 The optional global integration installer is separate from plugin installation.
 It requires explicit opt-in, preserves backups and refuses detected edits. It is

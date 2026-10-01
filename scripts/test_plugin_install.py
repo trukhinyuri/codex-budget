@@ -169,7 +169,7 @@ def main() -> None:
         assert added["marketplaceName"] == "codex-budget-marketplace"
         installed = run("plugin", "add", "codex-budget@codex-budget-marketplace", "--json")
         installed_root = Path(installed["installedPath"])
-        assert installed["version"] == "0.1.1"
+        assert installed["version"] == "0.2.0"
         assert (installed_root / "skills/codex-budget/SKILL.md").is_file()
         result = subprocess.run(  # noqa: S603 - current Python and installed entry point
             [sys.executable, str(installed_root / "scripts/budget.py"), "--version"],  # noqa: S603 - current Python and verified installed script
@@ -179,7 +179,26 @@ def main() -> None:
             timeout=10,
             check=True,
         )
-        assert result.stdout.strip() == "codex-budget 0.1.1"
+        assert result.stdout.strip() == "codex-budget 0.2.0"
+        result = subprocess.run(  # noqa: S603 - verified installed entry point and fixed advice inputs
+            [
+                sys.executable,
+                str(installed_root / "scripts/budget.py"),
+                "advise",
+                "--explicit-model",
+                "gpt-6.1-sol",
+                "--explicit-effort",
+                "ultra",
+            ],
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=True,
+        )
+        advice = json.loads(result.stdout)
+        assert advice["recommendedEffort"] == "ultra" and not advice["settingsApplied"]
+        assert advice["suggestedWorkerWidth"] == 1 and advice["admissionRequired"]
         listed = run("plugin", "list", "--marketplace", "codex-budget-marketplace", "--json")
         entry = next(item for item in listed["installed"] if item["name"] == "codex-budget")
         assert entry["installed"] and entry["enabled"]
@@ -191,6 +210,7 @@ def main() -> None:
                 {
                     "nativePluginInstall": True,
                     "installedEntryPoint": True,
+                    "installedAdviceReadback": True,
                     "enabledReadback": True,
                     "enabledSkillReadback": True,
                     "loadedSkillReadback": True,

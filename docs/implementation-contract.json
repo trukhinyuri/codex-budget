@@ -1,0 +1,97 @@
+{
+  "formatVersion": 1,
+  "goal": "Update Codex Budget for observed horizon and quality/team planning without weakening admission or modifying existing reservations.",
+  "clients": [
+    "Codex CLI",
+    "Codex Desktop"
+  ],
+  "requirements": [
+    {
+      "id": "reserve",
+      "requirement": "Retain included weekly reserve 20 pp plus buffer 3, seven-day planning and unknown/false permission deferral",
+      "source": "User budget and quality instructions; Codex Auto Teams research requirements",
+      "implementation": [
+        "codex_budget/core.py"
+      ],
+      "scenarios": [
+        "tests/test_core.py"
+      ],
+      "evidence": [
+        "tests/test_core.py"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "horizon",
+      "requirement": "Report 7/30-day observed shared demand; same account and confirmed same-period intervals, unknown future capacity",
+      "source": "User budget and quality instructions; Codex Auto Teams research requirements",
+      "implementation": [
+        "codex_budget/planning.py",
+        "codex_budget/core.py"
+      ],
+      "scenarios": [
+        "tests/test_planning.py:LedgerPlanningTests"
+      ],
+      "evidence": [
+        "tests/test_planning.py:LedgerPlanningTests"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "advice",
+      "requirement": "Quality-aware minimal-width advice; preserve explicit model/effort, check supplied capabilities, never apply settings",
+      "source": "User budget and quality instructions; Codex Auto Teams research requirements",
+      "implementation": [
+        "codex_budget/planning.py"
+      ],
+      "scenarios": [
+        "tests/test_planning.py:AdviceTests"
+      ],
+      "evidence": [
+        "tests/test_planning.py:AdviceTests"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "amend",
+      "requirement": "Audit unknown-to-positive or nondecreasing justified estimates, retain reservation and unreconciled state, never attribute charges",
+      "source": "User budget and quality instructions; Codex Auto Teams research requirements",
+      "implementation": [
+        "codex_budget/core.py"
+      ],
+      "scenarios": [
+        "tests/test_planning.py:LedgerPlanningTests",
+        "tests/test_cli.py"
+      ],
+      "evidence": [
+        "tests/test_planning.py:LedgerPlanningTests",
+        "tests/test_cli.py"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "package",
+      "requirement": "Valid portable package and stock isolated installation/skill discovery/meaningful installed command",
+      "source": "User budget and quality instructions; Codex Auto Teams research requirements",
+      "implementation": [
+        "plugin.json",
+        "skills/codex-budget/SKILL.md"
+      ],
+      "scenarios": [
+        "scripts/verify_release.py",
+        "scripts/test_plugin_install.py"
+      ],
+      "evidence": [
+        "scripts/verify_release.py",
+        "scripts/test_plugin_install.py"
+      ],
+      "status": "verified"
+    }
+  ],
+  "limits": [
+    "Advice is a heuristic, not a measured quality/latency improvement.",
+    "Forecasts are observed shared spending, not future capacity or charge attribution.",
+    "Evidence text in amendments is caller verified, not authenticated by this utility.",
+    "Public release CI and actual installed-host readback are separate release gates."
+  ]
+}

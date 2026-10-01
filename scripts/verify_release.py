@@ -22,6 +22,7 @@ FILES = [
     "SECURITY.md",
     "CONTRIBUTING.md",
     "docs/QUALITY.md",
+    "docs/implementation-contract.json",
     "docs/README.ru.md",
     "skills/codex-budget/SKILL.md",
     "scripts/budget.py",

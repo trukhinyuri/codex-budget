@@ -374,6 +374,11 @@ class Ledger:
                     task_id TEXT NOT NULL, root_id TEXT NOT NULL, priority TEXT NOT NULL,
                     estimate TEXT, status TEXT NOT NULL, started REAL NOT NULL,
                     finished REAL, PRIMARY KEY(account_fp,limit_id,reset_at,task_id));
+                CREATE TABLE IF NOT EXISTS amendments (
+                    id INTEGER PRIMARY KEY, account_fp TEXT NOT NULL, limit_id TEXT NOT NULL,
+                    reset_at INTEGER NOT NULL, task_id TEXT NOT NULL, amended REAL NOT NULL,
+                    previous_estimate TEXT, estimate TEXT NOT NULL,
+                    reason TEXT NOT NULL, evidence TEXT NOT NULL);
             """)
 
     @contextmanager
@@ -828,6 +833,102 @@ class Ledger:
                     db.execute("ROLLBACK")
                 raise
 
+    def amend(self, task_id, estimate, reason, evidence, now=None):
+        """Fill an unknown estimate or increase one; never reconcile or release charges."""
+        now = clock_value(time.time() if now is None else now)
+        identifier(task_id, "task ID")
+        identifier(reason, "amendment reason")
+        identifier(evidence, "amendment evidence")
+        new = number(estimate, "estimate", Decimal(100))
+        with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            try:
+                snapshot = self._latest(db)
+                if now >= snapshot["resetsAt"] or snapshot.get("warnings"):
+                    raise BudgetError("confirmed current period required for amendment")
+                row = db.execute(
+                    "SELECT * FROM stages WHERE account_fp=? AND limit_id=? AND reset_at=? AND task_id=?",
+                    (*identity(snapshot), task_id),
+                ).fetchone()
+                if row is None:
+                    raise BudgetError("stage unavailable in current account/period")
+                if row["status"] not in ("running", "unreconciled"):
+                    raise BudgetError("stored stage state invalid")
+                old = (
+                    None
+                    if row["estimate"] is None
+                    else number(row["estimate"], "stored estimate", Decimal(100))
+                )
+                if (old is None and new == 0) or (old is not None and new < old):
+                    raise BudgetError("amendment cannot clear or decrease a reservation")
+                changed = old != new
+                if changed:
+                    db.execute(
+                        "UPDATE stages SET estimate=? WHERE account_fp=? AND limit_id=? AND reset_at=? AND task_id=?",
+                        (estimate_text(new), *identity(snapshot), task_id),
+                    )
+                    db.execute(
+                        "INSERT INTO amendments(account_fp,limit_id,reset_at,task_id,amended,previous_estimate,estimate,reason,evidence) VALUES(?,?,?,?,?,?,?,?,?)",
+                        (
+                            *identity(snapshot),
+                            task_id,
+                            now,
+                            row["estimate"],
+                            estimate_text(new),
+                            reason,
+                            evidence,
+                        ),
+                    )
+                db.execute("COMMIT")
+                return {
+                    "taskId": task_id,
+                    "status": row["status"],
+                    "changed": changed,
+                    "estimatePp": float(new),
+                    "reservationRetained": True,
+                    "chargesReconciled": False,
+                    "evidenceVerifiedByUtility": False,
+                    "admissionRequired": True,
+                    "bestEffort": True,
+                }
+            except Exception:
+                if db.in_transaction:
+                    db.execute("ROLLBACK")
+                raise
+
+    def horizon(self, now=None):
+        """Report 7/30-day shared-usage trends without reserving future reset capacity."""
+        from .planning import history_forecast
+
+        now = clock_value(time.time() if now is None else now)
+        with self.connection() as db:
+            db.execute("BEGIN")
+            try:
+                snapshot = self._latest(db)
+                rows = db.execute(
+                    "SELECT * FROM snapshots WHERE account_fp=? AND limit_id=? AND observed>=? AND observed<=? ORDER BY observed,id",
+                    (*identity(snapshot)[:2], now - 30 * 86400, now),
+                ).fetchall()
+                observations = [self._snapshot_row(row) for row in rows]
+                plan = self._assess(
+                    db, snapshot, "horizon", "horizon", "ordinary", Decimal(0), True, False, now
+                )
+                plan.pop("decision")
+                result = {
+                    "currentPeriod": plan,
+                    "ordinaryUsageAllowed": snapshot.get("ordinaryUsageAllowed"),
+                    "horizons": [history_forecast(observations, days, now) for days in (7, 30)],
+                    "sharedSpendingUncertainty": True,
+                    "admissionRequired": True,
+                    "bestEffort": True,
+                }
+                db.execute("COMMIT")
+                return result
+            except Exception:
+                if db.in_transaction:
+                    db.execute("ROLLBACK")
+                raise
+
     def status(self, now=None):
         now = clock_value(time.time() if now is None else now)
         with self.connection() as db:
@@ -888,11 +989,19 @@ class Ledger:
                     }
                     for row in rows
                 ]
+                amendments = [
+                    dict(row)
+                    for row in db.execute(
+                        "SELECT task_id,amended,previous_estimate,estimate,reason,evidence FROM amendments WHERE account_fp=? AND limit_id=? AND reset_at=? ORDER BY id",
+                        identity(snapshot),
+                    ).fetchall()
+                ]
                 db.execute("COMMIT")
                 return {
                     "snapshot": snapshot,
                     "planning": plan,
                     "stages": stages,
+                    "amendments": amendments,
                     "bestEffort": True,
                 }
             except Exception:

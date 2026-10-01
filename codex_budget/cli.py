@@ -14,6 +14,7 @@ from pathlib import Path
 from . import __version__
 from .core import BudgetError, Ledger, strict_json_loads
 from .paths import database_path, state_path
+from .planning import advise
 from .transport import TransportError, _resolve_cli, platform_command, read_rate_limits
 
 
@@ -52,6 +53,28 @@ def parser() -> argparse.ArgumentParser:
         )
     finish = sub.add_parser("finish", help="mark ended; retain unreconciled reservation")
     finish.add_argument("--task-id", required=True)
+    amend = sub.add_parser("amend", help="audit a justified estimate; never clear or decrease")
+    amend.add_argument("--task-id", required=True)
+    amend.add_argument("--estimate-pp", required=True)
+    amend.add_argument("--reason", required=True)
+    amend.add_argument(
+        "--evidence", required=True, help="verified source for the complete estimate"
+    )
+    sub.add_parser("horizon", help="observed shared-usage forecasts for 7 and 30 days")
+    advice = sub.add_parser("advise", help="quality/model/team advice; never applies settings")
+    advice.add_argument(
+        "--complexity", choices=("simple", "ordinary", "complex"), default="ordinary"
+    )
+    advice.add_argument("--error-cost", choices=("low", "moderate", "high"), default="moderate")
+    advice.add_argument("--uncertainty", choices=("low", "moderate", "high"), default="moderate")
+    advice.add_argument("--repeatable", action="store_true")
+    advice.add_argument("--independent-parts", type=int, default=1)
+    advice.add_argument("--no-objective-check", action="store_true")
+    advice.add_argument("--explicit-model")
+    advice.add_argument("--explicit-effort")
+    advice.add_argument(
+        "--catalog", type=Path, help="original model/list JSON; verify freshness separately"
+    )
     doctor = sub.add_parser("doctor", help="check local prerequisites, no model or quota request")
     doctor.add_argument("--cli", help="stock Codex executable")
     return p
@@ -129,6 +152,32 @@ def main(argv: list[str] | None = None) -> int:
                     estimate=args.estimate_pp,
                     short=args.short,
                     background=args.background,
+                )
+            elif args.command == "amend":
+                result = ledger.amend(args.task_id, args.estimate_pp, args.reason, args.evidence)
+            elif args.command == "horizon":
+                result = ledger.horizon()
+            elif args.command == "advise":
+                try:
+                    planning = ledger.status()["planning"]
+                except BudgetError:
+                    planning = {"remainingPercent": None}
+                catalog = None
+                if args.catalog:
+                    if args.catalog.stat().st_size > 1024 * 1024:
+                        raise BudgetError("model catalog exceeds 1 MiB")
+                    catalog = strict_json_loads(args.catalog.read_bytes())
+                result = advise(
+                    complexity=args.complexity,
+                    error_cost=args.error_cost,
+                    uncertainty=args.uncertainty,
+                    repeatable=args.repeatable,
+                    independent_parts=args.independent_parts,
+                    objective_check=not args.no_objective_check,
+                    explicit_model=args.explicit_model,
+                    explicit_effort=args.explicit_effort,
+                    catalog=catalog,
+                    planning=planning,
                 )
             else:
                 result = ledger.finish(args.task_id)

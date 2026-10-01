@@ -66,6 +66,40 @@ class CliTests(unittest.TestCase):
         self.assertEqual((code, data["decision"]), (2, "defer"))
         self.assertEqual(self.run_cli("assess", "--task-id", "ordinary")[0], 3)
 
+    def test_horizon_advice_and_audited_amendment_commands(self):
+        self.ingest()
+        self.assertEqual(self.run_cli("horizon")[1]["horizons"][1]["horizonDays"], 30)
+        code, advice = self.run_cli(
+            "advise", "--explicit-model", "gpt-6.1-sol", "--explicit-effort", "ultra"
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(advice["recommendedEffort"], "ultra")
+        self.assertFalse(advice["settingsApplied"])
+        self.run_cli("start", "--task-id", "required", "--priority", "required")
+        self.run_cli("finish", "--task-id", "required")
+        code, amended = self.run_cli(
+            "amend",
+            "--task-id",
+            "required",
+            "--estimate-pp",
+            "2",
+            "--reason",
+            "verified complete-stage estimate",
+            "--evidence",
+            "all workers and retry allowance",
+        )
+        self.assertEqual((code, amended["status"]), (0, "unreconciled"))
+        status = self.run_cli("status")[1]
+        self.assertEqual(status["planning"]["pendingEstimatePp"], 2)
+        self.assertEqual(status["amendments"][0]["estimate"], "2")
+
+    def test_advice_with_unknown_quota_keeps_one_worker_and_unverified_settings(self):
+        code, data = self.run_cli("advise", "--independent-parts", "3")
+        self.assertEqual(code, 0)
+        self.assertEqual(data["suggestedWorkerWidth"], 1)
+        self.assertFalse(data["settingsReady"])
+        self.assertTrue(data["admissionRequired"])
+
     def test_duplicate_and_nonfinite_stdin_fail_closed(self):
         for payload in ['{"rateLimits":{},"rateLimits":{}}', '{"rateLimits":NaN}']:
             code, data = self.run_cli("ingest", payload=payload)
@@ -78,7 +112,7 @@ class CliTests(unittest.TestCase):
             "--version",
         ]
         result = subprocess.run(command, text=True, capture_output=True, timeout=5)
-        self.assertEqual((result.returncode, result.stdout.strip()), (0, "codex-budget 0.1.1"))
+        self.assertEqual((result.returncode, result.stdout.strip()), (0, "codex-budget 0.2.0"))
         result = subprocess.run(
             [sys.executable, "-m", "codex_budget.integration", "install"],
             text=True,

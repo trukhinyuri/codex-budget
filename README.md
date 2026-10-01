@@ -18,7 +18,7 @@ and Windows are included in the release CI matrix. Later Codex versions must pre
 the documented endpoint contract; the version number alone is not proof.
 
 ```sh
-codex plugin marketplace add trukhinyuri/codex-budget --ref v0.1.1
+codex plugin marketplace add trukhinyuri/codex-budget --ref v0.2.0
 codex plugin add codex-budget@codex-budget-marketplace
 codex plugin list --marketplace codex-budget-marketplace --json
 ```
@@ -104,6 +104,61 @@ changes cannot attribute charges to a stage. A cost may therefore count in both 
 and P, conservatively reducing availability. A new confirmed period is separate;
 early reset anomalies retain old reserves. History is preserved.
 
+## Horizon and quality planning
+
+`horizon` reports rolling **7-day and 30-day** observations from this account's
+confirmed ledger. It sums only observed intervals within the same weekly period;
+account switches, resets, decreased usage and anomalous transitions do not become
+free capacity. At least one hour of usable intervals is needed for extrapolation.
+The report shows sample coverage and skipped intervals. Projected demand is an
+estimate of shared spending, including other Desktop/CLI/Work clients. Future
+capacity remains unknown: a monthly forecast is not a monthly entitlement or a
+promise of uninterrupted work. No token/API-price conversion is used.
+
+```sh
+python3 scripts/budget.py horizon
+python3 scripts/budget.py advise --complexity complex --error-cost high --independent-parts 2
+python3 scripts/budget.py advise --explicit-model gpt-6.1-sol --explicit-effort ultra --catalog models.json
+```
+
+`advise` considers complexity, uncertainty, error cost, repeatability and objective
+verification. It suggests Luna/High for clear low-risk repeatable work, Sol/Medium
+for ordinary work, Sol/High for difficult or high-risk work and Astra/High for the
+most demanding combination. These are heuristics, not measured superiority claims.
+It starts with at most two independent workers; quota pressure or unknown budget
+reduces the suggestion to one. Width excludes the coordinator, and all helpers,
+review and retries still belong in the full stage estimate. Required work retains
+its quality checks. High error cost calls for focused independent review in addition
+to objective verification. The user may choose another adequate mode or width.
+
+Explicit model/effort choices are preserved, including Ultra. `--catalog` accepts
+the original stock `model/list` response; verify its freshness and pagination
+separately. Unsupported or absent choices report `settingsReady=false`, with no
+silent fallback. Catalog support is not proof that settings are effective in a
+running task. Recommendations only apply through a supported interface **before a
+new turn**; this utility never switches itself, dispatches models or changes global
+defaults/speed. Reassess after a decision error or unresolved contradiction; a
+missing source calls for diagnosis, not more reasoning.
+
+## Audited estimate amendments
+
+When a previously unknown complete-stage estimate becomes justified, `amend` can
+record it without deleting the reservation:
+
+```sh
+python3 scripts/budget.py amend --task-id CHAT:PHASE --estimate-pp 2 --reason "Complete stage now estimated" --evidence "Verified pilot plus planned helpers and retry allowance"
+```
+
+The number is illustrative. The caller must verify the stated evidence; the utility
+records it but cannot authenticate its truth or prove an upper bound. Amendments
+only fill unknown estimates with a positive amount or increase known estimates.
+They cannot decrease/clear a reservation, change another account/period, or reconcile
+charges. Original/new estimates, source, reason and time remain in `status`'s audit.
+Finished stages stay unreconciled. Quota deltas alone do not justify per-task costs.
+Run `assess`/`start` again after amendment; amendment never grants launch permission.
+If evidence is unavailable, keep the unknown reservation. No current reservations
+are changed by installing this release.
+
 ## Data and configuration
 
 By default data lives under `~/.local/share/codex-budget/` (or `XDG_DATA_HOME`):
@@ -153,7 +208,7 @@ its call operator; run that displayed command in PowerShell.
 python3 -m unittest discover -s tests -v
 ruff check .
 ruff format --check .
-python3 scripts/verify_release.py --zip dist/codex-budget-plugin-0.1.1.zip
+python3 scripts/verify_release.py --zip dist/codex-budget-plugin-0.2.0.zip
 ```
 
 CI runs independent-platform/version tests, packaging and plugin-install checks with

@@ -1,7 +1,7 @@
 {
   "name": "codex-budget",
-  "version": "0.1.1",
-  "description": "Conservative weekly quota planning for Codex Desktop and CLI. Best effort, not unlimited usage.",
+  "version": "0.2.0",
+  "description": "Conservative weekly quota planning, observed horizon forecasts and quality-aware team advice for Codex.",
   "skills": "./skills/",
   "interface": {
     "displayName": "Codex Budget",
