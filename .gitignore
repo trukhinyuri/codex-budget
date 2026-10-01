@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+.coverage*
+htmlcov/
+.ruff_cache/
+state/
+backups/
+*.sqlite3*
+budget-state*.json
+verification-local.json
+.DS_Store

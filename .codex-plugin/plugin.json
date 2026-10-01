@@ -1,0 +1,10 @@
+{
+  "name": "codex-budget",
+  "version": "0.1.0",
+  "description": "Conservative weekly quota planning for Codex Desktop and CLI. Best effort, not unlimited usage.",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Budget",
+    "shortDescription": "Plan weekly quota and preserve an urgent-work reserve"
+  }
+}
